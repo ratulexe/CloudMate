@@ -1,10 +1,12 @@
 # CloudMate - A weather website using API
-<h4>A weather website using API</h4>
+<h4>Built using Weather API (https://www.weatherapi.com/) </h4>
+<hr>
 <p>SkillX Project - 3rd Semester</p>
-<p>Submitted By - Ratul Kole (24CS2011044)</p>
-<p>Submitted By - Rick Biswas (24CS2011045)</p>
-<p>Submitted By - Bodheedipta Bose (24CS2011021)</p>
-<p>Submitted By - Sayan Tunga (24CS2011053)</p>
-<p>Submitted By - Ajoy Maity (24CS2011005)</p>
+<p>Submitted By - Ratul Kole (24CS2011044) <br>
+                - Rick Biswas (24CS2011045)  <br>
+                - Bodheedipta Bose (24CS2011021)  <br>
+                - Sayan Tunga (24CS2011053  <br>
+                - Ajoy Maity (24CS2011005)  <br>
+</p>
 
 LIVE LINK : https://ratulexe.github.io/CloudMate/
