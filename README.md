@@ -1,2 +1,2 @@
-# CloudMate-
+# CloudMate
 SkillX Project
