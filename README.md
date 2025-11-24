@@ -5,6 +5,6 @@
 <p>Submitted By - Rick Biswas (24CS2011045)</p>
 <p>Submitted By - Bodheedipta Bose (24CS2011021)</p>
 <p>Submitted By - Sayan Tunga (24CS2011053)</p>
-<p>Submitted By - AJoy Maity (24CS2011005)</p>
+<p>Submitted By - Ajoy Maity (24CS2011005)</p>
 
 LIVE LINK : https://ratulexe.github.io/CloudMate/
