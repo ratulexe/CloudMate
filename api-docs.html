@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Documentation - Weather Dashboard</title>
+  
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  
+  <style>
+    :root {
+      --gradient-start: #0f2027;
+      --gradient-mid: #203a43;
+      --gradient-end: #2c5364;
+      --accent: #00e5ff;
+      --glass-bg: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --code-bg: rgba(0, 0, 0, 0.3);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, var(--gradient-start), var(--gradient-mid), var(--gradient-end));
+      min-height: 100vh;
+      color: #fff;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      width: 200%;
+      height: 200%;
+      top: -50%;
+      left: -50%;
+      z-index: 0;
+      background-image: 
+        radial-gradient(circle at 20% 50%, rgba(0, 229, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(44, 83, 100, 0.2) 0%, transparent 50%);
+      animation: bgShift 20s ease infinite;
+    }
+
+    @keyframes bgShift {
+      0%, 100% { transform: translate(0, 0); }
+      50% { transform: translate(-5%, -5%); }
+    }
+
+    .header-glass {
+      background: var(--glass-bg);
+      backdrop-filter: blur(15px);
+      border-bottom: 1px solid var(--glass-border);
+      position: sticky;
+      top: 0;
+      z-index: 1030;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .content-wrapper {
+      position: relative;
+      z-index: 1;
+      padding-top: 2rem;
+      padding-bottom: 3rem;
+    }
+
+    .glass {
+      background: var(--glass-bg);
+      backdrop-filter: blur(15px);
+      border: 1px solid var(--glass-border);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .page-title {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #fff, var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .breadcrumb {
+      background: transparent;
+      margin-bottom: 2rem;
+    }
+
+    .breadcrumb-item a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .breadcrumb-item.active {
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .section-title {
+      font-size: 1.75rem;
+      font-weight: 600;
+      margin-top: 3rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--accent);
+    }
+
+    .subsection-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+      color: var(--accent);
+    }
+
+    .code-block {
+      background: var(--code-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 1rem 0;
+      overflow-x: auto;
+      position: relative;
+    }
+
+    .code-block code {
+      color: #a8dadc;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    .code-block .comment {
+      color: #6c757d;
+    }
+
+    .code-block .string {
+      color: #90ee90;
+    }
+
+    .code-block .keyword {
+      color: #ff6b9d;
+    }
+
+    .api-endpoint {
+      background: rgba(0, 229, 255, 0.1);
+      border-left: 4px solid var(--accent);
+      padding: 1rem;
+      margin: 1rem 0;
+      border-radius: 4px;
+    }
+
+    .api-endpoint .method {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      margin-right: 1rem;
+    }
+
+    .method.get {
+      background: #28a745;
+      color: white;
+    }
+
+    .method.post {
+      background: #007bff;
+      color: white;
+    }
+
+    .parameter-table {
+      width: 100%;
+      margin: 1rem 0;
+    }
+
+    .parameter-table th {
+      background: rgba(0, 229, 255, 0.1);
+      padding: 0.75rem;
+      text-align: left;
+      border-bottom: 2px solid var(--accent);
+    }
+
+    .parameter-table td {
+      padding: 0.75rem;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .parameter-table code {
+      background: var(--code-bg);
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      color: var(--accent);
+    }
+
+    .badge-required {
+      background: #dc3545;
+      color: white;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .badge-optional {
+      background: #6c757d;
+      color: white;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .accent {
+      color: var(--accent);
+    }
+
+    footer {
+      background: var(--glass-bg);
+      backdrop-filter: blur(15px);
+      border-top: 1px solid var(--glass-border);
+      margin-top: 4rem;
+    }
+
+    footer a:hover {
+      color: var(--accent) !important;
+    }
+
+    .navbar-brand {
+      font-weight: 700;
+      font-size: 1.5rem;
+    }
+
+    .nav-link {
+      color: rgba(255, 255, 255, 0.8) !important;
+      transition: color 0.3s;
+    }
+
+    .nav-link:hover {
+      color: var(--accent) !important;
+    }
+
+    .dropdown-menu {
+      background: rgba(15, 32, 39, 0.95);
+      backdrop-filter: blur(15px);
+      border: 1px solid var(--glass-border);
+    }
+
+    .dropdown-item {
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .dropdown-item:hover {
+      background: rgba(0, 229, 255, 0.1);
+      color: var(--accent);
+    }
+
+    .info-box {
+      background: rgba(0, 123, 255, 0.1);
+      border-left: 4px solid #007bff;
+      padding: 1rem;
+      margin: 1rem 0;
+      border-radius: 4px;
+    }
+
+    .warning-box {
+      background: rgba(255, 193, 7, 0.1);
+      border-left: 4px solid #ffc107;
+      padding: 1rem;
+      margin: 1rem 0;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <nav class="navbar navbar-expand-lg header-glass">
+    <div class="container">
+      <a class="navbar-brand" href="index.html">
+        <i class="bi bi-cloud-sun accent me-2"></i>Weather Dashboard
+      </a>
+      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="index.html">Home</a>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle active" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+              More
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+              <li><a class="dropdown-item" href="faq.html">FAQ</a></li>
+              <li><a class="dropdown-item active" href="api-docs.html">API Documentation</a></li>
+              <li><a class="dropdown-item" href="contact.html">Contact Us</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="terms.html">Terms of Service</a></li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="content-wrapper">
+    <div class="container">
+      <!-- Breadcrumb -->
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="index.html">Home</a></li>
+          <li class="breadcrumb-item active" aria-current="page">API Documentation</li>
+        </ol>
+      </nav>
+
+      <!-- Page Title -->
+      <h1 class="page-title">
+        <i class="bi bi-code-square me-3"></i>API Documentation
+      </h1>
+      <p class="lead mb-4">Technical documentation for Weather Dashboard API integration</p>
+
+      <div class="info-box">
+        <i class="bi bi-info-circle me-2"></i>
+        <strong>Note:</strong> Weather Dashboard uses WeatherAPI.com as its data provider. This documentation explains how our application interfaces with the WeatherAPI service.
+      </div>
+
+      <!-- Introduction -->
+      <h2 class="section-title">Introduction</h2>
+      <p>Weather Dashboard provides real-time weather data, forecasts, and city search capabilities through integration with the WeatherAPI service. The application makes client-side API requests to fetch weather information.</p>
+
+      <h3 class="subsection-title">Base URL</h3>
+      <div class="code-block">
+        <code>https://api.weatherapi.com/v1/</code>
+      </div>
+
+      <h3 class="subsection-title">Authentication</h3>
+      <p>All API requests require an API key for authentication. The key is included as a query parameter:</p>
+      <div class="code-block">
+        <code>?key=YOUR_API_KEY</code>
+      </div>
+
+      <div class="warning-box">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        <strong>Security Note:</strong> In production environments, API keys should be stored securely on the server-side and never exposed in client-side code.
+      </div>
+
+      <!-- API Endpoints -->
+      <h2 class="section-title">API Endpoints</h2>
+
+      <!-- Current Weather -->
+      <h3 class="subsection-title">1. Current Weather</h3>
+      <p>Retrieve real-time weather data for a specified location.</p>
+
+      <div class="api-endpoint">
+        <span class="method get">GET</span>
+        <code>/current.json</code>
+      </div>
+
+      <h4 class="mt-3 mb-2">Parameters</h4>
+      <table class="parameter-table glass">
+        <thead>
+          <tr>
+            <th>Parameter</th>
+            <th>Type</th>
+            <th>Required</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>key</code></td>
+            <td>string</td>
+            <td><span class="badge-required">Required</span></td>
+            <td>Your API key</td>
+          </tr>
+          <tr>
+            <td><code>q</code></td>
+            <td>string</td>
+            <td><span class="badge-required">Required</span></td>
+            <td>Location query (city name, coordinates, IP, etc.)</td>
+          </tr>
+          <tr>
+            <td><code>aqi</code></td>
+            <td>string</td>
+            <td><span class="badge-optional">Optional</span></td>
+            <td>Include air quality data (yes/no). Default: no</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h4 class="mt-3 mb-2">Example Request</h4>
+      <div class="code-block">
+        <code>
+<span class="keyword">GET</span> https://api.weatherapi.com/v1/current.json?key=<span class="string">YOUR_API_KEY</span>&q=<span class="string">Kolkata</span>&aqi=<span class="string">yes</span>
+        </code>
+      </div>
+
+      <h4 class="mt-3 mb-2">Example Response</h4>
+      <div class="code-block">
+        <code>
+<span class="keyword">{</span>
+  <span class="string">"location"</span>: {
+    <span class="string">"name"</span>: <span class="string">"Kolkata"</span>,
+    <span class="string">"region"</span>: <span class="string">"West Bengal"</span>,
+    <span class="string">"country"</span>: <span class="string">"India"</span>,
+    <span class="string">"lat"</span>: 22.57,
+    <span class="string">"lon"</span>: 88.37,
+    <span class="string">"tz_id"</span>: <span class="string">"Asia/Kolkata"</span>
+  },
+  <span class="string">"current"</span>: {
+    <span class="string">"temp_c"</span>: 28.5,
+    <span class="string">"temp_f"</span>: 83.3,
+    <span class="string">"condition"</span>: {
+      <span class="string">"text"</span>: <span class="string">"Partly cloudy"</span>,
+      <span class="string">"icon"</span>: <span class="string">"//cdn.weatherapi.com/weather/64x64/day/116.png"</span>
+    },
+    <span class="string">"wind_kph"</span>: 15.1,
+    <span class="string">"humidity"</span>: 72,
+    <span class="string">"feelslike_c"</span>: 31.2,
+    <span class="string">"uv"</span>: 6,
+    <span class="string">"air_quality"</span>: {
+      <span class="string">"us-epa-index"</span>: 3
+    }
+  }
+<span class="keyword">}</span>
+        </code>
+      </div>
+
+      <!-- Forecast -->
+      <h3 class="subsection-title">2. Weather Forecast</h3>
+      <p>Get weather forecast for up to 14 days.</p>
+
+      <div class="api-endpoint">
+        <span class="method get">GET</span>
+        <code>/forecast.json</code>
+      </div>
+
+      <h4 class="mt-3 mb-2">Parameters</h4>
+      <table class="parameter-table glass">
+        <thead>
+          <tr>
+            <th>Parameter</th>
+            <th>Type</th>
+            <th>Required</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>key</code></td>
+            <td>string</td>
+            <td><span class="badge-required">Required</span></td>
+            <td>Your API key</td>
+          </tr>
+          <tr>
+            <td><code>q</code></td>
+            <td>string</td>
+            <td><span class="badge-required">Required</span></td>
+            <td>Location query</td>
+          </tr>
+          <tr>
+            <td><code>days</code></td>
+            <td>integer</td>
+            <td><span class="badge-required">Required</span></td>
+            <td>Number of forecast days (1-14)</td>
+          </tr>
+          <tr>
+            <td><code>aqi</code></td>
+            <td>string</td>
+            <td><span class="badge-optional">Optional</span></td>
+            <td>Include air quality data</td>
+          </tr>
+          <tr>
+            <td><code>alerts</code></td>
+            <td>string</td>
+            <td><span class="badge-optional">Optional</span></td>
+            <td>Include weather alerts</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h4 class="mt-3 mb-2">Example Request</h4>
+      <div class="code-block">
+        <code>
+<span class="keyword">GET</span> https://api.weatherapi.com/v1/forecast.json?key=<span class="string">YOUR_API_KEY</span>&q=<span class="string">Mumbai</span>&days=<span class="string">7</span>
+        </code>
+      </div>
+
+      <!-- Search/Autocomplete -->
+      <h3 class="subsection-title">3. Search/Autocomplete</h3>
+      <p>Search for cities and get autocomplete suggestions.</p>
+
+      <div class="api-endpoint">
+        <span class="method get">GET</span>
+        <code>/search.json</code>
+      </div>
+
+      <h4 class="mt-3 mb-2">Parameters</h4>
+      <table class="parameter-table glass">
+        <thead>
+          <tr>
+            <th>Parameter</th>
+            <th>Type</th>
+            <th>Required</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>key</code></td>
+            <td>string</td>
+            <td><span class="badge-required">Required</span></td>
+            <td>Your API key</td>
+          </tr>
+          <tr>
+            <td><code>q</code></td>
+            <td>string</td>
+            <td><span class="badge-required">Required</span></td>
+            <td>Search query (minimum 2 characters)</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h4 class="mt-3 mb-2">Example Request</h4>
+      <div class="code-block">
+        <code>
+<span class="keyword">GET</span> https://api.weatherapi.com/v1/search.json?key=<span class="string">YOUR_API_KEY</span>&q=<span class="string">Delh</span>
+        </code>
+      </div>
+
+      <h4 class="mt-3 mb-2">Example Response</h4>
+      <div class="code-block">
+        <code>
+<span class="keyword">[</span>
+  {
+    <span class="string">"id"</span>: 2295019,
+    <span class="string">"name"</span>: <span class="string">"Delhi"</span>,
+    <span class="string">"region"</span>: <span class="string">"Delhi"</span>,
+    <span class="string">"country"</span>: <span class="string">"India"</span>,
+    <span class="string">"lat"</span>: 28.67,
+    <span class="string">"lon"</span>: 77.22,
+    <span class="string">"url"</span>: <span class="string">"delhi-delhi-india"</span>
+  },
+  {
+    <span class="string">"id"</span>: 2295020,
+    <span class="string">"name"</span>: <span class="string">"New Delhi"</span>,
+    <span class="string">"region"</span>: <span class="string">"Delhi"</span>,
+    <span class="string">"country"</span>: <span class="string">"India"</span>,
+    <span class="string">"lat"</span>: 28.6,
+    <span class="string">"lon"</span>: 77.2,
+    <span class="string">"url"</span>: <span class="string">"new-delhi-delhi-india"</span>
+  }
+<span class="keyword">]</span>
+        </code>
+      </div>
+
+      <!-- Response Fields -->
+      <h2 class="section-title">Common Response Fields</h2>
+
+      <h3 class="subsection-title">Location Object</h3>
+      <table class="parameter-table glass">
+        <thead>
+          <tr>
+            <th>Field</th>
+            <th>Type</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>name</code></td>
+            <td>string</td>
+            <td>City/location name</td>
+          </tr>
+          <tr>
+            <td><code>region</code></td>
+            <td>string</td>
+            <td>State/province name</td>
+          </tr>
+          <tr>
+            <td><code>country</code></td>
+            <td>string</td>
+            <td>Country name</td>
+          </tr>
+          <tr>
+            <td><code>lat</code></td>
+            <td>number</td>
+            <td>Latitude coordinate</td>
+          </tr>
+          <tr>
+            <td><code>lon</code></td>
+            <td>number</td>
+            <td>Longitude coordinate</td>
+          </tr>
+          <tr>
+            <td><code>tz_id</code></td>
+            <td>string</td>
+            <td>Timezone identifier</td>
+          </tr>
+          <tr>
+            <td><code>localtime</code></td>
+            <td>string</td>
+            <td>Local date and time</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3 class="subsection-title">Current Weather Object</h3>
+      <table class="parameter-table glass">
+        <thead>
+          <tr>
+            <th>Field</th>
+            <th>Type</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>temp_c</code></td>
+            <td>number</td>
+            <td>Temperature in Celsius</td>
+          </tr>
+          <tr>
+            <td><code>temp_f</code></td>
+            <td>number</td>
+            <td>Temperature in Fahrenheit</td>
+          </tr>
+          <tr>
+            <td><code>condition</code></td>
+            <td>object</td>
+            <td>Weather condition details</td>
+          </tr>
+          <tr>
+            <td><code>wind_kph</code></td>
+            <td>number</td>
+            <td>Wind speed in km/h</td>
+          </tr>
+          <tr>
+            <td><code>humidity</code></td>
+            <td>number</td>
+            <td>Humidity percentage</td>
+          </tr>
+          <tr>
+            <td><code>feelslike_c</code></td>
+            <td>number</td>
+            <td>Feels like temperature in Celsius</td>
+          </tr>
+          <tr>
+            <td><code>uv</code></td>
+            <td>number</td>
+            <td>UV index</td>
+          </tr>
+          <tr>
+            <td><code>vis_km</code></td>
+            <td>number</td>
+            <td>Visibility in kilometers</td>
+          </tr>
+          <tr>
+            <td><code>pressure_mb</code></td>
+            <td>number</td>
+            <td>Atmospheric pressure in millibars</td>
+          </tr>
+          <tr>
+            <td><code>gust_kph</code></td>
+            <td>number</td>
+            <td>Wind gust speed in km/h</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Rate Limits -->
+      <h2 class="section-title">Rate Limits & Best Practices</h2>
+      
+      <h3 class="subsection-title">Rate Limiting</h3>
+      <p>WeatherAPI implements rate limiting based on your subscription plan:</p>
+      <ul>
+        <li><strong>Free Plan:</strong> 1,000,000 calls/month</li>
+        <li><strong>Request frequency:</strong> Recommended minimum 10 minutes between identical requests</li>
+        <li><strong>Caching:</strong> Implement client-side caching to reduce API calls</li>
+      </ul>
+
+      <h3 class="subsection-title">Best Practices</h3>
+      <div class="glass p-4 rounded">
+        <ol>
+          <li class="mb-2"><strong>Cache responses:</strong> Store weather data temporarily to avoid redundant API calls</li>
+          <li class="mb-2"><strong>Debounce search:</strong> Wait for user to finish typing before making autocomplete requests</li>
+          <li class="mb-2"><strong>Batch requests:</strong> If loading multiple cities, add delays between requests</li>
+          <li class="mb-2"><strong>Handle errors:</strong> Implement proper error handling for network failures and API errors</li>
+          <li class="mb-2"><strong>Use coordinates:</strong> For more precise location data, use latitude/longitude instead of city names</li>
+          <li><strong>Monitor usage:</strong> Track your API usage to stay within rate limits</li>
+        </ol>
+      </div>
+
+      <!-- Error Handling -->
+      <h2 class="section-title">Error Handling</h2>
+
+      <h3 class="subsection-title">Common Error Codes</h3>
+      <table class="parameter-table glass">
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Message</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>400</code></td>
+            <td>Bad Request</td>
+            <td>Invalid parameters or malformed request</td>
+          </tr>
+          <tr>
+            <td><code>401</code></td>
+            <td>Unauthorized</td>
+            <td>Invalid API key</td>
+          </tr>
+          <tr>
+            <td><code>403</code></td>
+            <td>Forbidden</td>
+            <td>API key disabled or exceeded quota</td>
+          </tr>
+          <tr>
+            <td><code>404</code></td>
+            <td>Not Found</td>
+            <td>Location not found</td>
+          </tr>
+          <tr>
+            <td><code>500</code></td>
+            <td>Internal Server Error</td>
+            <td>Server-side error</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3 class="subsection-title">Error Response Example</h3>
+      <div class="code-block">
+        <code>
+<span class="keyword">{</span>
+  <span class="string">"error"</span>: {
+    <span class="string">"code"</span>: 1006,
+    <span class="string">"message"</span>: <span class="string">"No matching location found."</span>
+  }
+<span class="keyword">}</span>
+        </code>
+      </div>
+
+      <!-- JavaScript Implementation -->
+      <h2 class="section-title">JavaScript Implementation Example</h2>
+      
+      <h3 class="subsection-title">Fetching Current Weather</h3>
+      <div class="code-block">
+        <code>
+<span class="keyword">async function</span> fetchCurrentWeather(city) {
+  <span class="keyword">const</span> apiKey = <span class="string">'YOUR_API_KEY'</span>;
+  <span class="keyword">const</span> url = <span class="string">`https://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${city}&aqi=yes`</span>;
+  
+  <span class="keyword">try</span> {
+    <span class="keyword">const</span> response = <span class="keyword">await</span> fetch(url);
+    
+    <span class="keyword">if</span> (!response.ok) {
+      <span class="keyword">throw new</span> Error(<span class="string">`HTTP error! status: ${response.status}`</span>);
+    }
+    
+    <span class="keyword">const</span> data = <span class="keyword">await</span> response.json();
+    <span class="keyword">return</span> data;
+  } <span class="keyword">catch</span> (error) {
+    console.error(<span class="string">'Error fetching weather:'</span>, error);
+    <span class="keyword">throw</span> error;
+  }
+}
+
+<span class="comment">// Usage</span>
+fetchCurrentWeather(<span class="string">'Kolkata'</span>)
+  .then(data => console.log(data))
+  .catch(error => console.error(error));
+        </code>
+      </div>
+
+      <!-- Additional Resources -->
+      <h2 class="section-title">Additional Resources</h2>
+      <div class="glass p-4 rounded">
+        <ul class="list-unstyled">
+          <li class="mb-2">
+            <i class="bi bi-link-45deg accent me-2"></i>
+            <a href="https://www.weatherapi.com/docs/" target="_blank" class="accent text-decoration-none">Official WeatherAPI Documentation</a>
+          </li>
+          <li class="mb-2">
+            <i class="bi bi-key accent me-2"></i>
+            <a href="https://www.weatherapi.com/signup.aspx" target="_blank" class="accent text-decoration-none">Get Your API Key</a>
+          </li>
+          <li class="mb-2">
+            <i class="bi bi-question-circle accent me-2"></i>
+            <a href="faq.html" class="accent text-decoration-none">Weather Dashboard FAQ</a>
+          </li>
+          <li>
+            <i class="bi bi-envelope accent me-2"></i>
+            <a href="contact.html" class="accent text-decoration-none">Contact Support</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="text-center py-4">
+    <div class="container">
+      <div class="row mb-3">
+        <div class="col-md-3 col-6 mb-2">
+          <h6 class="text-uppercase fw-bold">Quick Links</h6>
+          <ul class="list-unstyled">
+            <li><a href="index.html#currentSection" class="text-muted text-decoration-none">Current Weather</a></li>
+            <li><a href="index.html#forecastSection" class="text-muted text-decoration-none">Forecast</a></li>
+            <li><a href="index.html#citiesSection" class="text-muted text-decoration-none">Cities</a></li>
+          </ul>
+        </div>
+        <div class="col-md-3 col-6 mb-2">
+          <h6 class="text-uppercase fw-bold">Resources</h6>
+          <ul class="list-unstyled">
+            <li><a href="faq.html" class="text-muted text-decoration-none">FAQ</a></li>
+            <li><a href="api-docs.html" class="text-muted text-decoration-none">API Docs</a></li>
+          </ul>
+        </div>
+        <div class="col-md-3 col-6 mb-2">
+          <h6 class="text-uppercase fw-bold">Legal</h6>
+          <ul class="list-unstyled">
+            <li><a href="terms.html" class="text-muted text-decoration-none">Terms of Service</a></li>
+            <li><a href="terms.html#privacy" class="text-muted text-decoration-none">Privacy Policy</a></li>
+          </ul>
+        </div>
+        <div class="col-md-3 col-6 mb-2">
+          <h6 class="text-uppercase fw-bold">Contact</h6>
+          <ul class="list-unstyled">
+            <li><a href="contact.html" class="text-muted text-decoration-none">Contact Us</a></li>
+            <li><a href="mailto:support@weatherdashboard.com" class="text-muted text-decoration-none">Support</a></li>
+          </ul>
+        </div>
+      </div>
+      <hr class="bg-muted">
+      <p class="mb-0 text-muted">Weather Dashboard &copy; 2024. Data provided by WeatherAPI.</p>
+    </div>
+  </footer>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

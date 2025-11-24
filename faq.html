@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FAQ - Weather Dashboard</title>
+  
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  
+  <style>
+    :root {
+      --gradient-start: #0f2027;
+      --gradient-mid: #203a43;
+      --gradient-end: #2c5364;
+      --accent: #00e5ff;
+      --glass-bg: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, var(--gradient-start), var(--gradient-mid), var(--gradient-end));
+      min-height: 100vh;
+      color: #fff;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      width: 200%;
+      height: 200%;
+      top: -50%;
+      left: -50%;
+      z-index: 0;
+      background-image: 
+        radial-gradient(circle at 20% 50%, rgba(0, 229, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(44, 83, 100, 0.2) 0%, transparent 50%);
+      animation: bgShift 20s ease infinite;
+    }
+
+    @keyframes bgShift {
+      0%, 100% { transform: translate(0, 0); }
+      50% { transform: translate(-5%, -5%); }
+    }
+
+    .header-glass {
+      background: var(--glass-bg);
+      backdrop-filter: blur(15px);
+      border-bottom: 1px solid var(--glass-border);
+      position: sticky;
+      top: 0;
+      z-index: 1030;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .content-wrapper {
+      position: relative;
+      z-index: 1;
+      padding-top: 2rem;
+      padding-bottom: 3rem;
+    }
+
+    .glass {
+      background: var(--glass-bg);
+      backdrop-filter: blur(15px);
+      border: 1px solid var(--glass-border);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .page-title {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #fff, var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .breadcrumb {
+      background: transparent;
+      margin-bottom: 2rem;
+    }
+
+    .breadcrumb-item a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .breadcrumb-item.active {
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .accordion-item {
+      background: var(--glass-bg);
+      backdrop-filter: blur(15px);
+      border: 1px solid var(--glass-border);
+      margin-bottom: 1rem;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .accordion-button {
+      background: rgba(255, 255, 255, 0.05);
+      color: #fff;
+      font-weight: 600;
+      border: none;
+      padding: 1.25rem;
+    }
+
+    .accordion-button:not(.collapsed) {
+      background: rgba(0, 229, 255, 0.1);
+      color: var(--accent);
+      box-shadow: none;
+    }
+
+    .accordion-button:focus {
+      box-shadow: none;
+      border-color: var(--accent);
+    }
+
+    .accordion-button::after {
+      filter: brightness(0) invert(1);
+    }
+
+    .accordion-body {
+      background: rgba(255, 255, 255, 0.03);
+      color: rgba(255, 255, 255, 0.9);
+      padding: 1.5rem;
+      border-top: 1px solid var(--glass-border);
+    }
+
+    .category-section {
+      margin-bottom: 3rem;
+    }
+
+    .category-title {
+      font-size: 1.75rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--accent);
+      display: inline-block;
+    }
+
+    .accent {
+      color: var(--accent);
+    }
+
+    footer {
+      background: var(--glass-bg);
+      backdrop-filter: blur(15px);
+      border-top: 1px solid var(--glass-border);
+      margin-top: 4rem;
+    }
+
+    footer a:hover {
+      color: var(--accent) !important;
+    }
+
+    .navbar-brand {
+      font-weight: 700;
+      font-size: 1.5rem;
+    }
+
+    .nav-link {
+      color: rgba(255, 255, 255, 0.8) !important;
+      transition: color 0.3s;
+    }
+
+    .nav-link:hover {
+      color: var(--accent) !important;
+    }
+
+    .dropdown-menu {
+      background: rgba(15, 32, 39, 0.95);
+      backdrop-filter: blur(15px);
+      border: 1px solid var(--glass-border);
+    }
+
+    .dropdown-item {
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .dropdown-item:hover {
+      background: rgba(0, 229, 255, 0.1);
+      color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <nav class="navbar navbar-expand-lg header-glass">
+    <div class="container">
+      <a class="navbar-brand" href="index.html">
+        <i class="bi bi-cloud-sun accent me-2"></i>Weather Dashboard
+      </a>
+      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="index.html">Home</a>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle active" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+              More
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+              <li><a class="dropdown-item active" href="faq.html">FAQ</a></li>
+              <li><a class="dropdown-item" href="api-docs.html">API Documentation</a></li>
+              <li><a class="dropdown-item" href="contact.html">Contact Us</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="terms.html">Terms of Service</a></li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="content-wrapper">
+    <div class="container">
+      <!-- Breadcrumb -->
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="index.html">Home</a></li>
+          <li class="breadcrumb-item active" aria-current="page">FAQ</li>
+        </ol>
+      </nav>
+
+      <!-- Page Title -->
+      <h1 class="page-title">
+        <i class="bi bi-question-circle-fill me-3"></i>Frequently Asked Questions
+      </h1>
+      <p class="lead mb-5">Find answers to common questions about Weather Dashboard</p>
+
+      <!-- General Questions -->
+      <div class="category-section">
+        <h2 class="category-title">General Questions</h2>
+        <div class="accordion" id="generalAccordion">
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#general1">
+                What is Weather Dashboard?
+              </button>
+            </h2>
+            <div id="general1" class="accordion-collapse collapse show" data-bs-parent="#generalAccordion">
+              <div class="accordion-body">
+                Weather Dashboard is a comprehensive weather information platform that provides real-time weather data, forecasts, and weather statistics for cities around the world. We use the WeatherAPI service to deliver accurate and up-to-date weather information.
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#general2">
+                Is Weather Dashboard free to use?
+              </button>
+            </h2>
+            <div id="general2" class="accordion-collapse collapse" data-bs-parent="#generalAccordion">
+              <div class="accordion-body">
+                Yes! Weather Dashboard is completely free to use. You can search for any city, view current weather conditions, 7-day forecasts, and compare weather across multiple cities without any cost or registration required.
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#general3">
+                How accurate is the weather data?
+              </button>
+            </h2>
+            <div id="general3" class="accordion-collapse collapse" data-bs-parent="#generalAccordion">
+              <div class="accordion-body">
+                We source our weather data from WeatherAPI, which aggregates data from multiple reliable sources including weather stations, satellites, and meteorological services. The data is updated in real-time and is highly accurate, though weather predictions naturally have some degree of uncertainty, especially for longer-term forecasts.
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#general4">
+                How often is the weather data updated?
+              </button>
+            </h2>
+            <div id="general4" class="accordion-collapse collapse" data-bs-parent="#generalAccordion">
+              <div class="accordion-body">
+                Current weather data is updated every 10-15 minutes. Forecasts are updated multiple times throughout the day. You can see the last update time displayed under the current weather information, and use the refresh button to get the latest data.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Features Questions -->
+      <div class="category-section">
+        <h2 class="category-title">Features & Functionality</h2>
+        <div class="accordion" id="featuresAccordion">
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#feature1">
+                How do I search for weather in my city?
+              </button>
+            </h2>
+            <div id="feature1" class="accordion-collapse collapse" data-bs-parent="#featuresAccordion">
+              <div class="accordion-body">
+                Simply type your city name in the search bar at the top of the page. As you type, autocomplete suggestions will appear showing matching cities along with their current temperature. Click on a suggestion or press Enter to view the full weather details for that location.
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#feature2">
+                What does the "My Location" button do?
+              </button>
+            </h2>
+            <div id="feature2" class="accordion-collapse collapse" data-bs-parent="#featuresAccordion">
+              <div class="accordion-body">
+                The "My Location" button uses your device's GPS/location services to automatically detect your current location and display weather information for your area. You'll need to grant permission for the website to access your location when prompted by your browser.
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#feature3">
+                What information is shown in the Cities table?
+              </button>
+            </h2>
+            <div id="feature3" class="accordion-collapse collapse" data-bs-parent="#featuresAccordion">
+              <div class="accordion-body">
+                The Cities table displays weather data for major Indian cities including:
+                <ul class="mt-2 mb-0">
+                  <li>Current temperature</li>
+                  <li>Weather condition</li>
+                  <li>Humidity percentage</li>
+                  <li>Wind speed</li>
+                  <li>Visibility distance</li>
+                  <li>Atmospheric pressure</li>
+                  <li>UV Index</li>
+                  <li>Dew point</li>
+                  <li>Wind gust speed</li>
+                  <li>Last update time</li>
+                </ul>
+                You can click on any city row to view detailed weather information for that city.
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#feature4">
+                Can I sort the Cities table?
+              </button>
+            </h2>
+            <div id="feature4" class="accordion-collapse collapse" data-bs-parent="#featuresAccordion">
+              <div class="accordion-body">
+                Yes! Click on any column header with an arrow icon to sort the table by that metric. Click again to reverse the sort order. You can sort by city name, temperature, or humidity levels.
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#feature5">
+                Is AQI data wrong now?
+              </button>
+            </h2>
+            <div id="feature5" class="accordion-collapse collapse" data-bs-parent="#featuresAccordion">
+              <div class="accordion-body">
+                Yes, Due to some techinial reason the AQI function is showing wrong.
+              </div>
+            </div>
+          </div>
+
+          
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#feature6">
+                How far ahead does the forecast extend?
+              </button>
+            </h2>
+            <div id="feature6" class="accordion-collapse collapse" data-bs-parent="#featuresAccordion">
+              <div class="accordion-body">
+                Weather Dashboard provides a 7-day forecast for any searched location. Each day shows the average temperature, high/low temperatures, and expected weather conditions with an icon representation.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Technical Questions -->
+      <div class="category-section">
+        <h2 class="category-title">Technical Questions</h2>
+        <div class="accordion" id="technicalAccordion">
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#tech1">
+                Which browsers are supported?
+              </button>
+            </h2>
+            <div id="tech1" class="accordion-collapse collapse" data-bs-parent="#technicalAccordion">
+              <div class="accordion-body">
+                Weather Dashboard works on all modern browsers including:
+                <ul class="mt-2 mb-0">
+                  <li>Google Chrome (recommended)</li>
+                  <li>Mozilla Firefox</li>
+                  <li>Microsoft Edge</li>
+                  <li>Safari</li>
+                  <li>Opera</li>
+                </ul>
+                We recommend using the latest version of your browser for the best experience.
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#tech2">
+                Is Weather Dashboard mobile-friendly?
+              </button>
+            </h2>
+            <div id="tech2" class="accordion-collapse collapse" data-bs-parent="#technicalAccordion">
+              <div class="accordion-body">
+                Yes! Weather Dashboard is fully responsive and optimized for mobile devices, tablets, and desktops. The layout automatically adapts to your screen size for the best viewing experience.
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#tech3">
+                Why isn't my location working?
+              </button>
+            </h2>
+            <div id="tech3" class="accordion-collapse collapse" data-bs-parent="#technicalAccordion">
+              <div class="accordion-body">
+                If the "My Location" feature isn't working, check the following:
+                <ul class="mt-2 mb-0">
+                  <li>Ensure location services are enabled on your device</li>
+                  <li>Grant location permission to your browser when prompted</li>
+                  <li>Check if your browser supports geolocation (most modern browsers do)</li>
+                  <li>Try using HTTPS instead of HTTP (some browsers require secure connection)</li>
+                  <li>Disable any VPN or location-masking software temporarily</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#tech4">
+                Do you store my location data?
+              </button>
+            </h2>
+            <div id="tech4" class="accordion-collapse collapse" data-bs-parent="#technicalAccordion">
+              <div class="accordion-body">
+                No. When you use the "My Location" feature, your coordinates are used only to fetch weather data and are not stored on our servers. Your location information is processed entirely in your browser and is never saved or shared.
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#tech5">
+                Can I use Weather Dashboard offline?
+              </button>
+            </h2>
+            <div id="tech5" class="accordion-collapse collapse" data-bs-parent="#technicalAccordion">
+              <div class="accordion-body">
+                Weather Dashboard requires an internet connection to fetch real-time weather data. However, recently viewed weather information may be temporarily cached by your browser and viewable briefly offline.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Account & Privacy -->
+      <div class="category-section">
+        <h2 class="category-title">Account & Privacy</h2>
+        <div class="accordion" id="accountAccordion">
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#account1">
+                Do I need to create an account?
+              </button>
+            </h2>
+            <div id="account1" class="accordion-collapse collapse" data-bs-parent="#accountAccordion">
+              <div class="accordion-body">
+                No account is required! Weather Dashboard is designed to be accessible to everyone without any registration. Simply visit the website and start checking weather conditions immediately.
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#account2">
+                What data do you collect?
+              </button>
+            </h2>
+            <div id="account2" class="accordion-collapse collapse" data-bs-parent="#accountAccordion">
+              <div class="accordion-body">
+                Weather Dashboard collects minimal data:
+                <ul class="mt-2 mb-0">
+                  <li>Search queries (city names) - not linked to any personal information</li>
+                  <li>Basic analytics (page views, browser type) - completely anonymous</li>
+                  <li>Location data (only when you use "My Location" - processed locally and not stored)</li>
+                </ul>
+                We do not collect, store, or share any personally identifiable information.
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#account3">
+                Do you use cookies?
+              </button>
+            </h2>
+            <div id="account3" class="accordion-collapse collapse" data-bs-parent="#accountAccordion">
+              <div class="accordion-body">
+                We use minimal, essential cookies for basic functionality like remembering your last searched city and analytics. These cookies do not track personal information. You can disable cookies in your browser settings, though some features may not work optimally.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Troubleshooting -->
+      <div class="category-section">
+        <h2 class="category-title">Troubleshooting</h2>
+        <div class="accordion" id="troubleshootAccordion">
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#trouble1">
+                The weather data isn't loading. What should I do?
+              </button>
+            </h2>
+            <div id="trouble1" class="accordion-collapse collapse" data-bs-parent="#troubleshootAccordion">
+              <div class="accordion-body">
+                Try these troubleshooting steps:
+                <ul class="mt-2 mb-0">
+                  <li>Check your internet connection</li>
+                  <li>Click the refresh button to reload weather data</li>
+                  <li>Clear your browser cache and cookies</li>
+                  <li>Try a different browser</li>
+                  <li>Disable browser extensions that might block requests</li>
+                  <li>Wait a few minutes and try again (API might be temporarily unavailable)</li>
+                </ul>
+                If the problem persists, please <a href="contact.html" class="accent">contact us</a>.
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#trouble2">
+                The autocomplete suggestions aren't appearing
+              </button>
+            </h2>
+            <div id="trouble2" class="accordion-collapse collapse" data-bs-parent="#troubleshootAccordion">
+              <div class="accordion-body">
+                Autocomplete suggestions appear after typing at least 2 characters. If they still don't show:
+                <ul class="mt-2 mb-0">
+                  <li>Ensure JavaScript is enabled in your browser</li>
+                  <li>Check if any ad-blocker or privacy extension is interfering</li>
+                  <li>Try typing the full city name and pressing Enter</li>
+                  <li>Refresh the page and try again</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#trouble3">
+                I found incorrect weather information
+              </button>
+            </h2>
+            <div id="trouble3" class="accordion-collapse collapse" data-bs-parent="#troubleshootAccordion">
+              <div class="accordion-body">
+                While our data source (WeatherAPI) is generally very accurate, occasional discrepancies can occur. Please:
+                <ul class="mt-2 mb-0">
+                  <li>Click the refresh button to get the latest data</li>
+                  <li>Verify you're viewing the correct city (check for similar city names)</li>
+                  <li>Compare with other weather sources</li>
+                  <li>If the issue persists, please <a href="contact.html" class="accent">report it to us</a> with details</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Still have questions? -->
+      <div class="glass rounded p-4 text-center mt-5">
+        <h3 class="mb-3">Still have questions?</h3>
+        <p class="mb-4">Can't find the answer you're looking for? We're here to help!</p>
+        <a href="contact.html" class="btn btn-outline-light btn-lg">
+          <i class="bi bi-envelope me-2"></i>Contact Support
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="text-center py-4">
+    <div class="container">
+      <div class="row mb-3">
+        <div class="col-md-3 col-6 mb-2">
+          <h6 class="text-uppercase fw-bold">Quick Links</h6>
+          <ul class="list-unstyled">
+            <li><a href="index.html#currentSection" class="text-muted text-decoration-none">Current Weather</a></li>
+            <li><a href="index.html#forecastSection" class="text-muted text-decoration-none">Forecast</a></li>
+            <li><a href="index.html#citiesSection" class="text-muted text-decoration-none">Cities</a></li>
+          </ul>
+        </div>
+        <div class="col-md-3 col-6 mb-2">
+          <h6 class="text-uppercase fw-bold">Resources</h6>
+          <ul class="list-unstyled">
+            <li><a href="faq.html" class="text-muted text-decoration-none">FAQ</a></li>
+            <li><a href="api-docs.html" class="text-muted text-decoration-none">API Docs</a></li>
+          </ul>
+        </div>
+        <div class="col-md-3 col-6 mb-2">
+          <h6 class="text-uppercase fw-bold">Legal</h6>
+          <ul class="list-unstyled">
+            <li><a href="terms.html" class="text-muted text-decoration-none">Terms of Service</a></li>
+            <li><a href="terms.html#privacy" class="text-muted text-decoration-none">Privacy Policy</a></li>
+          </ul>
+        </div>
+        <div class="col-md-3 col-6 mb-2">
+          <h6 class="text-uppercase fw-bold">Contact</h6>
+          <ul class="list-unstyled">
+            <li><a href="contact.html" class="text-muted text-decoration-none">Contact Us</a></li>
+            <li><a href="mailto:support@weatherdashboard.com" class="text-muted text-decoration-none">Support</a></li>
+          </ul>
+        </div>
+      </div>
+      <hr class="bg-muted">
+      <p class="mb-0 text-muted">Weather Dashboard &copy; 2024. Data provided by WeatherAPI.</p>
+    </div>
+  </footer>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cloudmate</title>
+
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="icon" type="image/png" href="./assets/images/favicon.png">
+
+    <!-- Futuristic CSS (must be after Bootstrap) -->
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      .table-container { background: #202c3f !important; border-radius: 12px; overflow: hidden; }
+      table.weather-table,
+      .table.weather-table,
+      table.weather-table thead,
+      table.weather-table tbody,
+      table.weather-table tr,
+      table.weather-table th,
+      table.weather-table td {
+        background: transparent !important;
+        background-color: transparent !important;
+        color: #ffffff !important;
+        border-color: rgba(255,255,255,0.06) !important;
+      }
+      table.weather-table { background-color: #202c3f !important; }
+      table.weather-table thead th {
+        background-color: rgba(255,255,255,0.03) !important;
+      }
+      table.weather-table tbody tr > *[style] { background: transparent !important; }
+    </style>
+  </head>
+
+  <body>
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-expand-lg header-glass">
+      <div class="container-fluid">
+        <a class="navbar-brand d-flex align-items-center gap-2" href="#">
+          <span class="brand-badge" aria-hidden="true">
+            <i class="bi bi-cloud-lightning-rain-fill"></i>
+          </span>
+          <div class="brand-text-wrap">
+            <span class="brand-title"><img src="./assets/images/logo.svg" alt="CLOUDMATE" style="width: 140px;"></span>
+            <small class="brand-sub">Global forecasts • Local accuracy</small>
+          </div>
+        </a>
+
+        <button
+          class="navbar-toggler btn-ghost"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarSupportedContent"
+          aria-controls="navbarSupportedContent"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0 align-items-lg-center">
+            <li class="nav-item"><a class="nav-link" href="#">Home</a></li>
+            <li class="nav-item">
+              <a class="nav-link" href="#about-section" data-scroll-to="about-section">
+                <i class="bi bi-info-circle me-1"></i>About Us
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#usage-section" data-scroll-to="usage-section">
+                <i class="bi bi-book me-1"></i>Usage Guide
+              </a>
+            </li>
+          </ul>
+
+          <!-- Search form with autocomplete -->
+          <form id="searchForm" class="d-flex align-items-center gap-2" role="search">
+            <div class="search-wrapper position-relative">
+              <i class="bi bi-search search-icon" aria-hidden="true"></i>
+              <input 
+                id="cityInput" 
+                class="form-control search-input" 
+                type="search" 
+                placeholder="Search city or ZIP" 
+                aria-label="Search" 
+                autocomplete="off"
+                aria-controls="suggestions"
+                aria-expanded="false"
+              />
+              <div id="suggestions" class="suggestions-dropdown list-group" role="listbox" aria-label="Search suggestions"></div>
+            </div>
+
+            <button class="btn btn-primary btn-search d-flex align-items-center gap-2" type="submit">
+              <i class="bi bi-search"></i><span class="d-none d-sm-inline">Search</span>
+            </button>
+          </form>
+
+        </div>
+      </div>
+    </nav>
+
+    <!-- HERO / PAGE TITLE -->
+    <header class="container hero mt-4">
+      <div class="d-flex align-items-center justify-content-between flex-column flex-md-row gap-3">
+        <div>
+          <h1 id="pageTitle" class="page-title mb-1"><i class="bi bi-geo-alt-fill accent me-2"></i>Weather for Kolkata</h1>
+          <div class="text-muted small" id="lastUpdated"><i class="bi bi-clock me-1"></i>Last updated: —</div>
+        </div>
+
+        <div class="d-flex gap-2">
+          <button id="locBtn" class="btn btn-ghost btn-location">
+            <i class="bi bi-crosshair me-1"></i><span class="d-none d-sm-inline">My Location</span>
+          </button>
+          <button id="refreshBtn" class="btn btn-accent btn-refresh">
+            <i class="bi bi-arrow-clockwise me-1"></i><span class="d-none d-sm-inline">Refresh</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- MAIN -->
+    <main class="container my-4">
+      <!-- Current conditions & stats -->
+      <div class="row mb-4">
+        <div class="col-12 col-md-6">
+          <div class="weather-card card mb-3 glass">
+            <div class="card-body d-flex align-items-center justify-content-between">
+              <div>
+                <div class="small text-uppercase text-muted">Now</div>
+                <div class="h2 weather-temp" id="currentTemp">--°C</div>
+                <div class="weather-desc text-muted" id="currentDesc">—</div>
+              </div>
+
+              <div class="text-end">
+                <div class="small text-muted">Feels like</div>
+                <div class="stat-value" id="feelsLike">--°C</div>
+                <div class="small text-muted mt-2" id="weatherMain">—</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Key stats -->
+          <div class="row">
+            <div class="col-6 col-lg-4 mb-3">
+              <div class="stat-card glass h-100">
+                <i class="bi bi-droplet-fill stat-icon"></i>
+                <div class="card-label">Humidity</div>
+                <div class="stat-value" id="humidity">--%</div>
+              </div>
+            </div>
+            <div class="col-6 col-lg-4 mb-3">
+              <div class="stat-card glass h-100">
+                <i class="bi bi-wind stat-icon"></i>
+                <div class="card-label">Wind</div>
+                <div class="stat-value" id="wind">-- km/h</div>
+              </div>
+            </div>
+            <div class="col-6 col-lg-4 mb-3">
+              <div class="stat-card glass h-100">
+                <i class="bi bi-eye-fill stat-icon"></i>
+                <div class="card-label">Visibility</div>
+                <div class="stat-value" id="visibility">-- km</div>
+              </div>
+            </div>
+            <div class="col-6 col-lg-4 mb-3">
+              <div class="stat-card glass h-100">
+                <i class="bi bi-speedometer2 stat-icon"></i>
+                <div class="card-label">Pressure</div>
+                <div class="stat-value" id="pressure">-- hPa</div>
+              </div>
+            </div>
+            <div class="col-6 col-lg-4 mb-3">
+              <div class="stat-card glass h-100">
+                <i class="bi bi-sun-fill stat-icon"></i>
+                <div class="card-label">UV Index</div>
+                <div class="stat-value" id="uvi">--</div>
+              </div>
+            </div>
+            <div class="col-6 col-lg-4 mb-3">
+              <div class="stat-card glass h-100">
+                <i class="bi bi-moisture stat-icon"></i>
+                <div class="card-label">Dew Point</div>
+                <div class="stat-value" id="dewPoint">--°C</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 7-day forecast -->
+        <div class="col-12 col-md-6">
+          <div class="weather-card card mb-3 glass">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0"><i class="bi bi-calendar-range me-2 accent"></i>7-Day Forecast</h5>
+                <small class="text-muted" id="timezoneLabel"></small>
+              </div>
+
+              <div id="forecastRow" class="row g-2"></div>
+            </div>
+          </div>
+
+          <div class="d-flex gap-2">
+            <div class="stat-card flex-fill text-center glass">
+              <i class="bi bi-lungs-fill stat-icon"></i>
+              <div class="card-label">Air Quality Index</div>
+              <div id="aqiValue" class="stat-value">—</div>
+            </div>
+            <div class="stat-card flex-fill text-center glass">
+              <i class="bi bi-radar stat-icon"></i>
+              <div class="card-label">Precipitation Radar</div>
+              <div class="small text-muted">(map tile)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Weather Data Section -->
+      <div class="weather-data-section">
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-column flex-md-row gap-3">
+          <h2 class="section-title mb-0"><i class="bi bi-globe-americas me-2 accent"></i>Weather Data - Major Cities</h2>
+          <div class="d-flex gap-2 align-items-center">
+            <div class="search-wrapper-small position-relative">
+              <i class="bi bi-funnel search-icon-small"></i>
+              <input 
+                type="text" 
+                id="tableSearch" 
+                class="form-control form-control-sm search-input-small" 
+                placeholder="Filter cities..."
+              />
+            </div>
+            <button id="refreshCitiesBtn" class="btn btn-sm btn-outline-light btn-refresh-cities">
+              <span id="refreshCitiesSpinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+              <i class="bi bi-arrow-clockwise me-1" id="refreshCitiesIcon"></i>
+              <span id="refreshCitiesText">Refresh All</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="table-responsive mb-5 table-container">
+          <table class="table weather-table text-center align-middle" id="citiesTable">
+            <thead>
+              <tr>
+                <th class="sortable" data-sort="city"><i class="bi bi-geo-alt me-1"></i>City</th>
+                <th class="sortable" data-sort="temp"><i class="bi bi-thermometer-half me-1"></i>Temperature</th>
+                <th><i class="bi bi-cloud-sun me-1"></i>Condition</th>
+                <th class="sortable" data-sort="humidity"><i class="bi bi-droplet me-1"></i>Humidity</th>
+                <th><i class="bi bi-wind me-1"></i>Wind</th>
+                <th><i class="bi bi-eye me-1"></i>Visibility</th>
+                <th><i class="bi bi-speedometer2 me-1"></i>Pressure</th>
+                <th><i class="bi bi-sun me-1"></i>UV Index</th>
+                <th><i class="bi bi-moisture me-1"></i>Dew Point</th>
+                <th><i class="bi bi-clock me-1"></i>Last Updated</th>
+                <th><i class="bi bi-tornado me-1"></i>Gust Speed</th>
+              </tr>
+            </thead>
+
+            <tbody id="citiesTableBody">
+              <tr>
+                <td colspan="11" class="text-center py-5">
+                  <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>
+                  <div class="mt-2">Loading weather data for major cities...</div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="text-center info-footer mb-4 text-muted">
+          <p><i class="bi bi-info-circle me-1"></i>Showing weather data for <span id="citiesCount">0</span> major cities</p>
+          <p class="mb-0"><i class="bi bi-arrow-repeat me-1"></i>Data updates every 10 minutes • Powered by WeatherAPI</p>
+        </div>
+      </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="footer-glow" id="footer-section">
+      <div class="container">
+        <div class="row g-4">
+          <!-- Brand Section -->
+          <div class="col-lg-4 col-md-6">
+            <div class="footer-brand">
+              <h5 class="mb-3">
+                <i class="bi bi-cloud-lightning-rain-fill me-2"></i>
+                <img src="./assets/images/logo.svg" alt="CLOUDMATE" style="height: 24px; vertical-align: middle;">
+              </h5>
+              <p class="mb-3 small">The next-gen climate intelligence platform</p>
+              <div class="small opacity-75">© 2025 CLOUDMATE — Designed for the future.</div>
+            </div>
+          </div>
+
+          <!-- About Section -->
+          <div class="col-lg-4 col-md-6" id="about-section">
+            <h6 class="text-accent mb-3">About</h6>
+            <p class="small mb-3">
+              CLOUDMATE provides real-time weather data, forecasts, and climate insights using cutting-edge technology. 
+              Stay informed with accurate weather predictions powered by advanced meteorological data.
+            </p>
+            <ul class="list-unstyled small">
+              <li class="mb-2"><i class="bi bi-check-circle-fill text-accent me-2"></i>Real-time updates</li>
+              <li class="mb-2"><i class="bi bi-check-circle-fill text-accent me-2"></i>7-day forecasts</li>
+              <li class="mb-2"><i class="bi bi-check-circle-fill text-accent me-2"></i>Global coverage</li>
+            </ul>
+          </div>
+
+          <!-- Usage Guide Section -->
+          <div class="col-lg-4 col-md-6" id="usage-section">
+            <h6 class="text-accent mb-3">Usage Guide</h6>
+            <ul class="list-unstyled small">
+              <li class="mb-2">
+                <strong>Search:</strong> Enter any city name to get instant weather data
+              </li>
+              <li class="mb-2">
+                <strong>Location:</strong> Click the location icon to use your current position
+              </li>
+              <li class="mb-2">
+                <strong>Forecast:</strong> Scroll down to view detailed 7-day weather predictions
+              </li>
+              <li class="mb-2">
+                <strong>Details:</strong> Check humidity, wind speed, and precipitation levels
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Quick Links Section (Full Width) -->
+        <div class="row mt-4">
+          <div class="col-12">
+            <div class="d-flex justify-content-center flex-wrap gap-3 pb-3">
+              <a href="#" class="footer-link small">Privacy Policy</a>
+              <span class="text-muted">|</span>
+              <a href="#" class="footer-link small">Terms of Service</a>
+              <span class="text-muted">|</span>
+              <a href="api-docs.html" target="_blank" class="footer-link small">API Documentation</a>
+              <span class="text-muted">|</span>
+              <a href="#" class="footer-link small">Contact Us</a>
+              <span class="text-muted">|</span>
+              <a href="faq.html" target="_blank" class="footer-link small">FAQ</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Bar -->
+        <div class="row pt-3 border-top" style="border-color: var(--border) !important;">
+          <div class="col-12 text-center small opacity-75">
+            Built with <i class="bi bi-heart-fill text-accent"></i> using OpenWeatherMap API
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Your script -->
+    <script src="script.js"></script>
+    <script>
+        
+    </script>
+  </body>
+</html>
