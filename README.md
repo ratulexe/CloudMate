@@ -10,7 +10,7 @@ It provides real-time weather data for any global location using WeatherAPI.
 <h2>📄 Project Report</h2>
 <p>
 You can view or download the complete project report from the link below:<br/><br/>
-🔗 <a href="https://drive.google.com/file/d/1ju6HKlgY2r2T3PdbRFye1ksRL8p14SnO/view?usp=sharing">Click here to open Project Report</a>
+🔗 <a href="https://drive.google.com/file/d/1ju6HKlgY2r2T3PdbRFye1ksRL8p14SnO/view?usp=sharing" target="_blank">Click here to open Project Report</a>
 </p>
 
 <hr/>
