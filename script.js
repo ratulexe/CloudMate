@@ -1,6 +1,6 @@
-// script.js - Full weather app script (drop-in replacement)
+// script.js - Full weather app script (FINAL FIX)
 // Asset path (uploaded favicon) - dev tool will transform this to a URL if needed
-const ASSET_PATH = '/mnt/data/favicon-logo.png';
+const ASSET_PATH = 'C:\\Users\\thera\\OneDrive\\Desktop\\weather-app\\assets\\images\\favicon.png';
 
 // ===================================
 // WEATHER APP - MAIN JAVASCRIPT
@@ -13,7 +13,8 @@ const CONFIG = {
   debounceDelay: 300,
   cacheExpiry: 600000, // 10 minutes
   batchSize: 5,
-  batchDelay: 2000 // 2 seconds between batches
+  batchDelay: 2000, // 2 seconds between batches
+  autoRefreshInterval: 600000 // Auto-refresh every 10 minutes (600000ms)
 };
 
 // Major cities to display in the table
@@ -29,7 +30,10 @@ const state = {
   sortColumn: null,
   sortDirection: 'asc',
   focusedIndex: -1,
-  isLoadingCities: false
+  isLoadingCities: false,
+  weatherDataTimestamp: null, // SIMPLE: Just store when we GOT the data
+  timestampInterval: null,
+  autoRefreshInterval: null
 };
 
 // DOM elements (populated on DOMContentLoaded)
@@ -56,9 +60,68 @@ async function fetchJson(url) {
 function formatDate(dateStr) {
   try {
     const date = new Date(dateStr);
-    return date.toLocaleString();
+    
+    // Format: 25 November 2025, 14:30:45
+    const day = date.getDate();
+    const month = date.toLocaleString('en-US', { month: 'long' });
+    const year = date.getFullYear();
+    
+    // 24-hour format time
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    
+    return `${day} ${month} ${year}, ${hours}:${minutes}:${seconds}`;
   } catch {
     return '-';
+  }
+}
+
+function getCurrentTimestampIST() {
+  const now = new Date();
+  
+  // Convert to IST (UTC+5:30)
+  const istOffset = 5.5 * 60 * 60 * 1000;
+  const istTime = new Date(now.getTime() + istOffset);
+  
+  const dayName = istTime.toLocaleDateString('en-US', { weekday: 'long', timeZone: 'UTC' }).toUpperCase();
+  const day = istTime.getUTCDate();
+  const month = istTime.toLocaleString('en-US', { month: 'long', timeZone: 'UTC' }).toUpperCase();
+  const year = istTime.getUTCFullYear();
+  
+  const hours = String(istTime.getUTCHours()).padStart(2, '0');
+  const minutes = String(istTime.getUTCMinutes()).padStart(2, '0');
+  const seconds = String(istTime.getUTCSeconds()).padStart(2, '0');
+  
+  return `${dayName}, ${day} ${month} ${year}, ${hours}:${minutes}:${seconds} IST`;
+}
+
+// SIMPLE VERSION - Just calculate time since we got the data
+function getTimeSinceUpdate() {
+  if (!state.weatherDataTimestamp) {
+    return 'UNKNOWN';
+  }
+  
+  const now = Date.now();
+  const diffMs = now - state.weatherDataTimestamp;
+  const diffSeconds = Math.floor(diffMs / 1000);
+  const diffMinutes = Math.floor(diffSeconds / 60);
+  
+  if (diffSeconds < 30) {
+    return 'JUST NOW';
+  } else if (diffSeconds < 60) {
+    return `${diffSeconds} SECONDS AGO`;
+  } else if (diffMinutes === 1) {
+    return '1 MINUTE AGO';
+  } else if (diffMinutes < 60) {
+    return `${diffMinutes} MINUTES AGO`;
+  } else {
+    const hours = Math.floor(diffMinutes / 60);
+    if (hours === 1) {
+      return '1 HOUR AGO';
+    } else {
+      return `${hours} HOURS AGO`;
+    }
   }
 }
 
@@ -93,7 +156,6 @@ function getUVClass(uv) {
 // ===================================
 
 async function fetchCurrentWeather(city) {
-  // city can be name or "lat,lon"
   const url = `https://api.weatherapi.com/v1/current.json?key=${CONFIG.apiKey}&q=${encodeURIComponent(city)}&aqi=yes`;
   return fetchJson(url);
 }
@@ -112,7 +174,7 @@ async function searchCities(query) {
 // AUTOCOMPLETE FUNCTIONALITY
 // ===================================
 
-let fetchSuggestions = null; // will be assigned after debounce definition
+let fetchSuggestions = null;
 
 fetchSuggestions = debounce(async (query) => {
   const term = query.trim();
@@ -134,7 +196,6 @@ fetchSuggestions = debounce(async (query) => {
 
     const limited = searchResults.slice(0, 7);
 
-    // Fetch temperatures for suggestions (parallel)
     const withTemps = await Promise.all(
       limited.map(async (loc) => {
         try {
@@ -155,7 +216,6 @@ fetchSuggestions = debounce(async (query) => {
   }
 }, CONFIG.debounceDelay);
 
-// Render suggestion buttons
 function renderSuggestions(suggestions) {
   DOM.suggestionsBox.innerHTML = '';
 
@@ -174,14 +234,12 @@ function renderSuggestions(suggestions) {
 
     button.addEventListener('click', () => {
       if (raw && raw.location) {
-        // raw is current.json structure
         renderCurrentWeather(raw);
         loadForecast(raw.location.name).catch(() => {});
         DOM.cityInput.value = `${raw.location.name}${raw.location.region ? ', ' + raw.location.region : ''}`;
         state.currentCity = raw.location.name;
         renderCitiesTable(DOM.tableSearch.value);
       } else {
-        // fallback: use display name
         loadWeatherForCity(displayName);
       }
       hideSuggestions();
@@ -190,7 +248,6 @@ function renderSuggestions(suggestions) {
     DOM.suggestionsBox.appendChild(button);
   });
 
-  // reset keyboard navigation state
   state.focusedIndex = -1;
   const items = DOM.suggestionsBox.querySelectorAll('.list-group-item');
   items.forEach((it, i) => {
@@ -211,17 +268,78 @@ function hideSuggestions() {
 }
 
 // ===================================
+// TIMESTAMP UPDATE - SIMPLE VERSION
+// ===================================
+
+function updateTimestampDisplay() {
+  if (!DOM.lastUpdated) return;
+  
+  const timestamp = getCurrentTimestampIST();
+  const timeSince = getTimeSinceUpdate();
+  
+  DOM.lastUpdated.innerHTML = `
+    <div class="fw-bold">TIMESTAMP: ${timestamp}</div>
+    <div class="text-muted">LAST UPDATED: ${timeSince}</div>
+  `;
+}
+
+function startTimestampUpdates() {
+  // Clear any existing interval
+  if (state.timestampInterval) {
+    clearInterval(state.timestampInterval);
+  }
+  
+  // Update immediately
+  updateTimestampDisplay();
+  
+  // Update every second
+  state.timestampInterval = setInterval(updateTimestampDisplay, 1000);
+}
+
+function stopTimestampUpdates() {
+  if (state.timestampInterval) {
+    clearInterval(state.timestampInterval);
+    state.timestampInterval = null;
+  }
+}
+
+function startAutoRefresh() {
+  if (state.autoRefreshInterval) {
+    clearInterval(state.autoRefreshInterval);
+  }
+  
+  state.autoRefreshInterval = setInterval(() => {
+    console.log('Auto-refreshing weather...');
+    if (state.currentCity) {
+      loadWeatherForCity(state.currentCity);
+    }
+  }, CONFIG.autoRefreshInterval);
+}
+
+function stopAutoRefresh() {
+  if (state.autoRefreshInterval) {
+    clearInterval(state.autoRefreshInterval);
+    state.autoRefreshInterval = null;
+  }
+}
+
+// ===================================
 // WEATHER DATA RENDERING
 // ===================================
 
 function renderCurrentWeather(data) {
-  if (!data || !data.location || !data.current) return;
+  if (!data || !data.location || !data.current) {
+    console.error('Invalid weather data');
+    return;
+  }
 
   const { location: loc, current: cur } = data;
 
+  // SIMPLE: Just mark when we received the data
+  state.weatherDataTimestamp = Date.now();
+
   // Update page title
   DOM.pageTitle.textContent = `Weather for ${loc.name}${loc.region ? ', ' + loc.region : ''}`;
-  DOM.lastUpdated.textContent = `Last updated: ${formatDate(cur.last_updated)}`;
 
   // Current weather card
   DOM.currentTemp.textContent = `${Math.round(cur.temp_c)}°C`;
@@ -241,13 +359,16 @@ function renderCurrentWeather(data) {
 
   // AQI
   if (cur.air_quality && (cur.air_quality['us-epa-index'] != null || cur.air_quality['us-epa'] != null )) {
-    // WeatherAPI uses keys like "us-epa-index"
     DOM.aqiValue.textContent = cur.air_quality['us-epa-index'] ?? cur.air_quality['us-epa'] ?? '—';
   } else {
     DOM.aqiValue.textContent = '—';
   }
 
   state.currentCity = loc.name;
+
+  // Start updates
+  startTimestampUpdates();
+  startAutoRefresh();
 }
 
 function renderForecast(forecastDays) {
@@ -288,7 +409,6 @@ async function loadAllCitiesWeather() {
   setLoadingState(true);
 
   try {
-    // Batch process cities to avoid rate limits
     const batches = [];
     for (let i = 0; i < MAJOR_CITIES.length; i += CONFIG.batchSize) {
       batches.push(MAJOR_CITIES.slice(i, i + CONFIG.batchSize));
@@ -301,7 +421,6 @@ async function loadAllCitiesWeather() {
         try {
           const data = await fetchCurrentWeather(city);
           state.citiesData.set(city, {
-            data,
             data,
             timestamp: new Date().getTime()
           });
@@ -317,7 +436,6 @@ async function loadAllCitiesWeather() {
       await Promise.all(promises);
       renderCitiesTable();
 
-      // Delay between batches to respect rate limits
       if (batchIndex < batches.length - 1) {
         await new Promise(resolve => setTimeout(resolve, CONFIG.batchDelay));
       }
@@ -349,12 +467,10 @@ function renderCitiesTable(filterText = '') {
     return;
   }
 
-  // Convert Map to array and filter
   let citiesArray = Array.from(state.citiesData.entries())
     .map(([city, cached]) => ({ city, ...cached }))
     .filter(item => item.data);
 
-  // Apply search filter
   if (filterText) {
     const lower = filterText.toLowerCase();
     citiesArray = citiesArray.filter(item =>
@@ -362,7 +478,6 @@ function renderCitiesTable(filterText = '') {
     );
   }
 
-  // Apply sorting
   if (state.sortColumn) {
     citiesArray.sort((a, b) => {
       let aVal, bVal;
@@ -390,7 +505,6 @@ function renderCitiesTable(filterText = '') {
     });
   }
 
-  // Render rows
   citiesArray.forEach(({ city, data }) => {
     const row = createCityRow(city, data);
     tbody.appendChild(row);
@@ -425,7 +539,6 @@ function createCityRow(city, data) {
     <td>${cur.gust_kph ? Math.round(cur.gust_kph) + ' km/h' : '--'}</td>
   `;
 
-  // Click to view detailed weather
   row.style.cursor = 'pointer';
   row.addEventListener('click', () => {
     loadWeatherForCity(city);
@@ -468,7 +581,6 @@ function setupTableSorting() {
         state.sortDirection = 'asc';
       }
 
-      // Update UI
       document.querySelectorAll('.sortable').forEach(h => {
         h.classList.remove('sort-asc', 'sort-desc');
       });
@@ -485,29 +597,6 @@ function setupTableSorting() {
 
 function scrollToSectionByElement(sectionEl) {
   if (!sectionEl) return;
-  const headerHeight = document.querySelector('.header-glass')?.offsetHeight || 80;
-  const elementPosition = sectionEl.getBoundingClientRect().top;
-  const offsetPosition = elementPosition + window.pageYOffset - headerHeight - 20;
-  window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
-  // brief highlight
-  sectionEl.style.transition = 'box-shadow 0.35s, transform 0.35s';
-  sectionEl.style.boxShadow = '0 10px 40px rgba(0,229,255,0.12)';
-  sectionEl.style.transform = 'translateY(-3px)';
-  setTimeout(() => {
-    sectionEl.style.boxShadow = '';
-    sectionEl.style.transform = '';
-  }, 900);
-}
-
-// ===================================
-// HEADER NAVIGATION / FOOTER SCROLL
-// ===================================
-
-function scrollToSectionByElement(sectionEl) {
-  if (!sectionEl) {
-    console.warn('scrollToSectionByElement: No element provided');
-    return;
-  }
   
   const headerHeight = document.querySelector('.header-glass')?.offsetHeight || 80;
   const elementPosition = sectionEl.getBoundingClientRect().top;
@@ -515,7 +604,6 @@ function scrollToSectionByElement(sectionEl) {
   
   window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
   
-  // Brief highlight effect
   sectionEl.style.transition = 'box-shadow 0.35s, transform 0.35s';
   sectionEl.style.boxShadow = '0 10px 40px rgba(0,229,255,0.12)';
   sectionEl.style.transform = 'translateY(-3px)';
@@ -527,7 +615,6 @@ function scrollToSectionByElement(sectionEl) {
 }
 
 function attachFooterScrollToLinks() {
-  // Attach smooth scroll for About and Usage links in navbar/footer
   document.querySelectorAll('a.nav-link[href^="#"], a[data-scroll-to]').forEach(link => {
     link.addEventListener('click', e => {
       const href = link.getAttribute('href');
@@ -541,7 +628,6 @@ function attachFooterScrollToLinks() {
         const section = document.getElementById(targetId);
         if (section) {
           e.preventDefault();
-          // Close mobile nav if open
           const navbarCollapse = document.getElementById('navbarSupportedContent');
           if (navbarCollapse?.classList.contains('show')) {
             const bsCollapse = bootstrap.Collapse.getInstance(navbarCollapse) ||
@@ -570,7 +656,6 @@ async function loadWeatherForCity(city) {
     DOM.cityInput.value = `${currentData.location.name}${currentData.location.region ? ', ' + currentData.location.region : ''}`;
     state.currentCity = currentData.location.name;
 
-    // Re-render table to highlight current city
     renderCitiesTable(DOM.tableSearch.value);
 
   } catch (error) {
@@ -608,13 +693,11 @@ function searchCity() {
 // ===================================
 
 function setupEventListeners() {
-  // Search form
   DOM.searchForm.addEventListener('submit', (e) => {
     e.preventDefault();
     searchCity();
   });
 
-  // City input - autocomplete
   DOM.cityInput.addEventListener('input', (e) => {
     const value = e.target.value;
     if (!value) {
@@ -624,7 +707,6 @@ function setupEventListeners() {
     fetchSuggestions(value);
   });
 
-  // Keyboard navigation for suggestions
   DOM.cityInput.addEventListener('keydown', (e) => {
     const items = DOM.suggestionsBox.querySelectorAll('.list-group-item');
     if (!items.length) return;
@@ -653,14 +735,12 @@ function setupEventListeners() {
     }
   });
 
-  // Click outside to hide suggestions
   document.addEventListener('click', (e) => {
     if (!DOM.suggestionsBox.contains(e.target) && e.target !== DOM.cityInput) {
       hideSuggestions();
     }
   });
 
-  // Location button
   DOM.locBtn.addEventListener('click', () => {
     if (!navigator.geolocation) {
       alert('Geolocation is not supported by your browser');
@@ -678,32 +758,36 @@ function setupEventListeners() {
     );
   });
 
-  // Refresh button
   DOM.refreshBtn.addEventListener('click', () => {
     loadWeatherForCity(state.currentCity);
   });
 
-  // Table search/filter
   DOM.tableSearch.addEventListener('input', (e) => {
     renderCitiesTable(e.target.value);
   });
 
-  // Refresh all cities button
   DOM.refreshCitiesBtn.addEventListener('click', () => {
     state.citiesData.clear();
     loadAllCitiesWeather();
   });
 
-  // Setup table sorting
   setupTableSorting();
 }
+
+// ===================================
+// CLEANUP
+// ===================================
+
+window.addEventListener('beforeunload', () => {
+  stopTimestampUpdates();
+  stopAutoRefresh();
+});
 
 // ===================================
 // INITIALIZATION
 // ===================================
 
 async function init() {
-  // Populate DOM references (must run after DOM ready)
   DOM = {
     cityInput: document.getElementById('cityInput'),
     suggestionsBox: document.getElementById('suggestions'),
@@ -721,7 +805,6 @@ async function init() {
     refreshCitiesSpinner: document.getElementById('refreshCitiesSpinner'),
     refreshCitiesText: document.getElementById('refreshCitiesText'),
     citiesCount: document.getElementById('citiesCount'),
-    // main stat elements
     currentTemp: document.getElementById('currentTemp'),
     currentDesc: document.getElementById('currentDesc'),
     feelsLike: document.getElementById('feelsLike'),
@@ -734,22 +817,15 @@ async function init() {
     dewPoint: document.getElementById('dewPoint')
   };
 
-  // Basic checks
   if (!DOM.cityInput || !DOM.suggestionsBox || !DOM.citiesTableBody) {
     console.error('Required DOM elements missing. Check IDs in HTML.');
     return;
   }
 
-  // Make sure the suggestions box is hidden initially
   hideSuggestions();
-
-  // Attach event listeners (search, buttons, keyboard)
   setupEventListeners();
-
-  // Attach footer-scroll behavior to About / Usage links
   attachFooterScrollToLinks();
 
-  // Load default city + table
   DOM.cityInput.value = CONFIG.defaultCity;
   try {
     await loadWeatherForCity(CONFIG.defaultCity);
@@ -757,34 +833,12 @@ async function init() {
     console.warn('Initial city load failed:', e);
   }
 
-  // Start loading major cities table (non-blocking)
   loadAllCitiesWeather().catch(e => console.warn('loadAllCitiesWeather failed', e));
   console.log('Weather App initialized');
 }
 
-// Start when DOM ready
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
 } else {
   init();
-}
-//Date and Time Format Update
-function formatDate(dateStr) {
-  try {
-    const date = new Date(dateStr);
-    
-    // Format: 25 November 2025, 14:30:45
-    const day = date.getDate();
-    const month = date.toLocaleString('en-US', { month: 'long' });
-    const year = date.getFullYear();
-    
-    // 24-hour format time
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const seconds = String(date.getSeconds()).padStart(2, '0');
-    
-    return `${day} ${month} ${year}, ${hours}:${minutes}:${seconds}`;
-  } catch {
-    return '-';
-  }
 }
