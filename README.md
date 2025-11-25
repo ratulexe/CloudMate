@@ -17,8 +17,8 @@ You can view or download the complete project report from the link below:<br/><b
 
 <h2>🚀 Live Demo</h2>
 <ul>
-  <li><strong>Website:</strong> <a href="https://ratulexe.github.io/CloudMate/">https://ratulexe.github.io/CloudMate/</a></li>
-  <li><strong>GitHub Repository:</strong> <a href="https://github.com/ratulexe/CloudMate">https://github.com/ratulexe/CloudMate</a></li>
+  <li><strong>Website:</strong> <a href="https://ratulexe.github.io/CloudMate/" target="_blank">https://ratulexe.github.io/CloudMate/</a></li>
+  <li><strong>GitHub Repository:</strong> <a href="https://github.com/ratulexe/CloudMate" target="_blank">https://github.com/ratulexe/CloudMate</a></li>
 </ul>
 
 <hr/>
