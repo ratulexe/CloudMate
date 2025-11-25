@@ -302,7 +302,8 @@ async function loadAllCitiesWeather() {
           const data = await fetchCurrentWeather(city);
           state.citiesData.set(city, {
             data,
-            timestamp: Date.now()
+            data,
+            timestamp: new Date().getTime()
           });
           loadedCount++;
           DOM.citiesCount.textContent = loadedCount;
@@ -766,4 +767,24 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
 } else {
   init();
+}
+//Date and Time Format Update
+function formatDate(dateStr) {
+  try {
+    const date = new Date(dateStr);
+    
+    // Format: 25 November 2025, 14:30:45
+    const day = date.getDate();
+    const month = date.toLocaleString('en-US', { month: 'long' });
+    const year = date.getFullYear();
+    
+    // 24-hour format time
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    
+    return `${day} ${month} ${year}, ${hours}:${minutes}:${seconds}`;
+  } catch {
+    return '-';
+  }
 }
