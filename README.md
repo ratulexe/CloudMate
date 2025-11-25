@@ -89,7 +89,7 @@ CloudMate/
 
 <h2>🧠 What We Learned</h2>
 <ul>
-  <li>API integration using JavaScript Fetch()</li>
+  <li>API integration using JavaScript fetch()</li>
   <li>Working with JSON responses</li>
   <li>DOM manipulation and dynamic UI updates</li>
   <li>Responsive web design using CSS</li>
