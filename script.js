@@ -1,5 +1,4 @@
-// script.js - Full weather app script (FINAL FIX)
-// Asset path (uploaded favicon) - dev tool will transform this to a URL if needed
+// Asset path 
 const ASSET_PATH = 'C:\\Users\\thera\\OneDrive\\Desktop\\weather-app\\assets\\images\\favicon.png';
 
 // ===================================
